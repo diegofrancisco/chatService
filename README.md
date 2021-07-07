@@ -21,17 +21,23 @@ From the root directory:
 
 ## Usage
 
-Follow the instructions in the client terminal to login
+1) Run the server instance
 
-Write a message to be broadcast to all users logged in the chat.
+2) Run 1 or more client instances
 
-You can write the following commands:
+3) Follow the instructions in the client terminal to login
 
-- /p [user] [message]
-    Writes a private message to a specific user
+4) You can:
 
-- /exit
-    Logout from the chat
+    4.1) Write a message to be broadcast to all users logged in the chat.
+
+    4.2) write the following commands:
+
+        - /p [user] [message]
+            Writes a private message to a specific user
+
+        - /exit
+            Logout from the chat
 
 An example of a chat exchange:
 
