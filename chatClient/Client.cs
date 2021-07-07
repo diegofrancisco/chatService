@@ -17,6 +17,8 @@ namespace chatClient
             // Gets the local host IP address
             IPAddress ipAddress = LocalNetInfo.getInstance().getLocalHostIP();
             NetworkStream stream = null;
+            Thread threadListener = null;
+            Listener listener = null;
             string clientMessage;
             string serverMessage;
             bool connected = false;
@@ -44,10 +46,10 @@ namespace chatClient
                         ConsoleSync.writeToConsoleSync(serverMessage);
                         if (response)
                         {
-                            Listener listener = new Listener(stream);
-                            Thread thread = new Thread(new ThreadStart(listener.run));
-                            thread.IsBackground = true;
-                            thread.Start();
+                            listener = new Listener(stream);
+                            threadListener = new Thread(new ThreadStart(listener.run));
+                            threadListener.IsBackground = true;
+                            threadListener.Start();
 
                             MessageBroker.sendMessageToServer(stream, "ACK");
                             break;
@@ -61,6 +63,12 @@ namespace chatClient
                     {
                         clientMessage = Console.ReadLine();
                         MessageBroker.sendMessageToServer(stream, clientMessage);
+
+                        if (clientMessage.Trim().ToLower() == "/exit")
+                        {
+                            listener.StayAlive = false;
+                            break;
+                        }
                     }
                 }
                 finally

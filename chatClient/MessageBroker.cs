@@ -70,6 +70,12 @@ namespace chatClient
                         valid = true;
                     }
                 }
+                else if (command.ToLower() == "e") // exit
+                {
+                    command = "x";
+                    body = message;
+                    valid = true;
+                }
             }
             else
             {

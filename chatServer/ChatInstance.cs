@@ -83,6 +83,11 @@ namespace chatServer
                         string arg = aux[1];
                         this.sendDM(message, nickname, arg);
                     }
+                    else if (command == "x") // user exited
+                    {
+                        UserPool.getInstance().removeUser(nickname);
+                        break;
+                    }
                     else
                     {
                         this.broadcastToAllClients(String.Format("{0} says: {1}", nickname, message));
@@ -90,6 +95,9 @@ namespace chatServer
                 }
                 Thread.Sleep(500);
             }
+
+            if (stream != null) stream.Close();
+            Console.WriteLine(String.Format("User {0} left and is now offline.", nickname));
         }
     }
 }

@@ -8,6 +8,13 @@ namespace chatClient
     public class Listener
     {
         private NetworkStream mStream = null;
+        private bool stayAlive = true;
+
+        public bool StayAlive
+        {
+            set { stayAlive = value; }
+        }
+
         public Listener(NetworkStream stream)
         {
             this.mStream = stream;
@@ -19,14 +26,19 @@ namespace chatClient
 
             while (true)
             {
-                if (this.mStream.DataAvailable)
+                if (this.stayAlive)
                 {
-                    MessageBroker.getServerResponse(this.mStream, out message);
-                    ConsoleSync.writeToConsoleSync(message);
-                }else
-                {
-                    Thread.Sleep(500);
+                    if (this.mStream.DataAvailable)
+                    {
+                        MessageBroker.getServerResponse(this.mStream, out message);
+                        ConsoleSync.writeToConsoleSync(message);
+                    }
+                    else
+                    {
+                        Thread.Sleep(500);
+                    }
                 }
+                else break;
             }
         }
     }

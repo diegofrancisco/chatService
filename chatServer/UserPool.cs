@@ -78,6 +78,7 @@ namespace chatServer
             {
                 if (this.m_usersMap.ContainsKey(user))
                 {
+                    this.m_usersMap[user].Close();
                     this.m_usersMap.Remove(user);
                     success = true;
                 }
