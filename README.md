@@ -1,5 +1,5 @@
 # Chat Service
-A simple console chat service that allows the connection of multiple clients
+A simple console chat service that allows the multiple clients connections
 
 ## Table of Contents
 * [Requirements](#requirements)
@@ -23,7 +23,7 @@ From the root directory:
 
 1) Run the server instance
 
-2) Run 1 or more client instances
+2) Run one or more client instances
 
 3) Follow the instructions in the client terminal to login
 
