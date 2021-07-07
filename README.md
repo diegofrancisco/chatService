@@ -2,9 +2,14 @@
 A simple console chat service that allows the connection of multiple clients
 
 ## Table of Contents
+* [Requirements](#requirements)
 * [Setup](#setup)
 * [Usage](#usage)
 * [About](#about)
+
+## Requirements
+
+dotnet core CLI: https://dotnet.microsoft.com/download
 
 ## Setup
 
