@@ -25,6 +25,11 @@ namespace chatServer
             UserPool.getInstance().broadcast(broadcastMessage);
         }
 
+        private void sendDM(string message, string from, string to) 
+        {
+            UserPool.getInstance().sendDM(message, from, to);
+        }
+
         public ChatInstance(string user, TcpClient tcpClient)
         {
             this.user = user;
@@ -35,12 +40,13 @@ namespace chatServer
         {            
             NetworkStream stream = this.socket.GetStream();
             string nickname;
+            string command;
 
             MessageBroker.sendMessageToClient(stream, "Welcome to out chat server! Please provide a nickname: ", 0);
 
             while (true)
             {
-                nickname = MessageBroker.getClientResponse(stream);
+                nickname = MessageBroker.getClientResponse(stream, out command);
 
                 if (String.IsNullOrEmpty(nickname))
                 {
@@ -50,7 +56,7 @@ namespace chatServer
                 {
                     this.user = nickname.Trim();
                     MessageBroker.sendMessageToClient(stream, String.Format("You are registered as {0}. Joining #general", nickname), 1);
-                    MessageBroker.getClientResponse(stream); // Receive ACK before sending broadcast
+                    MessageBroker.getClientResponse(stream, out command); // Receive ACK before sending broadcast
                     this.broadcastToAllClients(String.Format("{0} has joined #general", nickname));
                     Console.WriteLine(String.Format("User {0} registered and is now online.", nickname));
                     break;
@@ -65,8 +71,22 @@ namespace chatServer
             {
                 if (stream.DataAvailable)
                 {
-                    string command = MessageBroker.getClientResponse(stream);
-                    this.broadcastToAllClients(String.Format("{0} says: {1}", nickname, command));
+                    string message = MessageBroker.getClientResponse(stream, out command);
+
+                    if (command == "e") // error processing client message
+                    {
+                        Console.WriteLine(String.Format("Error processing message from {0}", nickname));
+                    }
+                    else if (command.StartsWith("p")) // private message
+                    {
+                        string[] aux = command.Split("#");
+                        string arg = aux[1];
+                        this.sendDM(message, nickname, arg);
+                    }
+                    else
+                    {
+                        this.broadcastToAllClients(String.Format("{0} says: {1}", nickname, message));
+                    }
                 }
                 Thread.Sleep(500);
             }

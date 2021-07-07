@@ -107,5 +107,32 @@ namespace chatServer
                 MessageBroker.sendMessageToClient(stream, message, 1);
             }
         }
+
+        public void sendDM(string message, string from, string to)
+        {
+            TcpClient socketTo = null;
+            TcpClient socketFrom = null;
+
+
+            lock (m_lock)
+            {
+                if(this.m_usersMap.ContainsKey(to)) socketTo = this.m_usersMap[to];
+                if(this.m_usersMap.ContainsKey(from)) socketFrom = this.m_usersMap[from];
+            }
+
+            if (socketTo != null && socketFrom != null)
+            {
+                NetworkStream streamTo = socketTo.GetStream();
+                MessageBroker.sendMessageToClient(streamTo, String.Format("{0} says to {1}: {2}", from, to, message), 1);
+
+                NetworkStream streamFrom = socketFrom.GetStream();
+                MessageBroker.sendMessageToClient(streamFrom, String.Format("{0} says privately to {1}: {2}", from, to, message), 1);
+            }
+            else if (socketTo == null && socketFrom != null)
+            {
+                NetworkStream streamFrom = socketFrom.GetStream();
+                MessageBroker.sendMessageToClient(streamFrom, String.Format("User {0} its not online anymore =/", to), 1);
+            }
+        }
     }
 }
