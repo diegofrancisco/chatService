@@ -5,10 +5,10 @@ using chatServer;
 namespace chatTest
 {
     [TestClass]
-    public class MessageBrokerTest
+    public class UserPoolTest
     {
         [TestMethod]
-        public void TestAddingExistingUser()
+        public void AddingExistingUserTest()
         {
             TcpClient tcpClient = new TcpClient();
             string user = "Alice";
@@ -21,7 +21,7 @@ namespace chatTest
         }
 
         [TestMethod]
-        public void RemovingNonexistentUser()
+        public void RemovingNonexistentUserTest()
         {
             string user = "Bob";
 

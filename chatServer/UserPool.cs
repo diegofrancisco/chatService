@@ -87,17 +87,6 @@ namespace chatServer
             return success;
         }
 
-        public async Task broadcastAsync(string message)
-        {
-            List<TcpClient> users = this.getUsers();
-
-            foreach (TcpClient socket in users)
-            {
-                NetworkStream stream = socket.GetStream();
-                await MessageBroker.sendMessageToClientAsync(stream, message, 1);
-            }
-        }
-
         public void broadcast(string message)
         {
             List<TcpClient> users = this.getUsers();

@@ -1,46 +1,87 @@
 using System;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace chatServer
 {
     public class ChatInstance
     {
+        /// <summary>
+        /// TCP socket stream for communication.
+        /// </summary>
         public TcpClient socket { get; set; }
-        public string user { get; set; }
 
-        private void broadcastToAllClientsAsync(string broadcastMessage) // TODO revisar
-        {
-            Task t = new Task(async () =>
-            {
-                 await UserPool.getInstance().broadcastAsync(broadcastMessage);
-            });
-            Task.WaitAll(t);
-        }
+        /// <summary>
+        /// user nickname.
+        /// </summary>
+        public string userNickname { get; set; }
 
-        private void broadcastToAllClients(string broadcastMessage) 
-        {
-            UserPool.getInstance().broadcast(broadcastMessage);
-        }
-
-        private void sendDM(string message, string from, string to) 
-        {
-            UserPool.getInstance().sendDM(message, from, to);
-        }
-
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="user"> user nickname. </param>
+        /// <param name="tcpClient"> TCP socket stream for communication. </param>
         public ChatInstance(string user, TcpClient tcpClient)
         {
-            this.user = user;
+            this.userNickname = user;
             this.socket = tcpClient;
         }
 
+        /// <summary>
+        /// Starts chat instance for a given user logged in the server.
+        /// </summary>
         public void run()
         {            
             NetworkStream stream = this.socket.GetStream();
+            string command;
+
+            if (this.doHandshake(stream))
+            {
+                // process user chat commands/messages
+                while (true)
+                {
+                    if (stream.DataAvailable)
+                    {
+                        string message = MessageBroker.getClientResponse(stream, out command);
+
+                        if (command == "e") // error processing client message
+                        {
+                            Console.WriteLine(String.Format("Error processing message from {0}", userNickname));
+                        }
+                        else if (command.StartsWith("p")) // private message
+                        {
+                            string[] aux = command.Split("#");
+                            string arg = aux[1];
+                            UserPool.getInstance().sendDM(message, userNickname, arg);
+                        }
+                        else if (command == "x") // user exited
+                        {
+                            UserPool.getInstance().removeUser(userNickname);
+                            break;
+                        }
+                        else // standard chat message to be broadcast to all logged users
+                        {
+                            UserPool.getInstance().broadcast(String.Format("{0} says: {1}", userNickname, message));
+                        }
+                    }
+                    Thread.Sleep(500);
+                }
+            }
+
+            if (stream != null) stream.Close();
+            Console.WriteLine(String.Format("User {0} left and is now offline.", userNickname));
+        }
+
+        /// <summary>
+        /// Handles initial handshake with the client.
+        /// </summary>
+        /// <param name="stream"> TCP socket stream for communication. </param>
+        /// <returns> Returns 'true' if the handshake was successful. </returns>
+        private bool doHandshake(NetworkStream stream)
+        {
             string nickname;
             string command;
+            bool success = false;
 
             MessageBroker.sendMessageToClient(stream, "Welcome to out chat server! Please provide a nickname: ", 0);
 
@@ -54,11 +95,12 @@ namespace chatServer
                 }
                 else if (UserPool.getInstance().addUser(nickname.Trim(), this.socket))
                 {
-                    this.user = nickname.Trim();
+                    this.userNickname = nickname.Trim();
                     MessageBroker.sendMessageToClient(stream, String.Format("You are registered as {0}. Joining #general", nickname), 1);
-                    MessageBroker.getClientResponse(stream, out command); // Receive ACK before sending broadcast
-                    this.broadcastToAllClients(String.Format("{0} has joined #general", nickname));
+                    MessageBroker.getClientResponse(stream, out command); // Receive ACK before sending broadcast                    
+                    UserPool.getInstance().broadcast(String.Format("{0} has joined #general", nickname));
                     Console.WriteLine(String.Format("User {0} registered and is now online.", nickname));
+                    success = true;
                     break;
                 }
                 else
@@ -67,37 +109,7 @@ namespace chatServer
                 }
             }
 
-            while (true)
-            {
-                if (stream.DataAvailable)
-                {
-                    string message = MessageBroker.getClientResponse(stream, out command);
-
-                    if (command == "e") // error processing client message
-                    {
-                        Console.WriteLine(String.Format("Error processing message from {0}", nickname));
-                    }
-                    else if (command.StartsWith("p")) // private message
-                    {
-                        string[] aux = command.Split("#");
-                        string arg = aux[1];
-                        this.sendDM(message, nickname, arg);
-                    }
-                    else if (command == "x") // user exited
-                    {
-                        UserPool.getInstance().removeUser(nickname);
-                        break;
-                    }
-                    else
-                    {
-                        this.broadcastToAllClients(String.Format("{0} says: {1}", nickname, message));
-                    }
-                }
-                Thread.Sleep(500);
-            }
-
-            if (stream != null) stream.Close();
-            Console.WriteLine(String.Format("User {0} left and is now offline.", nickname));
+            return success;
         }
     }
 }

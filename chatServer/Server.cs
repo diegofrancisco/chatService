@@ -20,7 +20,7 @@ namespace chatServer
         Server()
         {   }
 
-                /// <summary>
+        /// <summary>
         /// Returns singleton instance.
         /// </summary>
         /// <returns> Singleton instance. </returns>
@@ -38,32 +38,36 @@ namespace chatServer
         /// </summary>
         public void run()
         {
-            // Gets the local host IP address
+            bool connected = false;            
             IPAddress ipAddress = LocalNetInfo.getInstance().getLocalHostIP();
-
             TcpListener tcpListener = new TcpListener(ipAddress, 1234); // TODO colocar como parametro de configuracao
+
             try
             {
                 tcpListener.Start();
+                connected = true;
             }
             catch (SocketException ex)
             {
-                // TODO adicionar lib de logs
-                Console.WriteLine("Exception ex", ex.Message);
+                Console.WriteLine(String.Format("It was not possible to start server TCP socktet. Error: {0}", ex.Message));
             }
 
-            Console.WriteLine("Server started. Waiting conections...");
-
-            while (true)
+            if (connected)
             {
-                TcpClient tcpClient = tcpListener.AcceptTcpClient();
+                Console.WriteLine("Server started. Waiting conections...");
 
-                Console.WriteLine("New user connected!");
+                // Listen to new client connections
+                while (true)
+                {
+                    TcpClient tcpClient = tcpListener.AcceptTcpClient();
 
-                ChatInstance chat = new ChatInstance(string.Empty, tcpClient);
-                Thread thread = new Thread(new ThreadStart(chat.run));
-                thread.IsBackground = true;
-                thread.Start();
+                    Console.WriteLine("New user connected!");
+
+                    ChatInstance chat = new ChatInstance(string.Empty, tcpClient);
+                    Thread thread = new Thread(new ThreadStart(chat.run));
+                    thread.IsBackground = true;
+                    thread.Start();
+                }
             }
         }
     }
