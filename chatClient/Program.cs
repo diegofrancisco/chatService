@@ -13,7 +13,8 @@ namespace chatClient
         /// Starts chat client.
         /// </summary>
         private static void startChatClient(){
-            Client.run();
+            Client client = new Client();
+            client.run();
         }
     }
 }

@@ -13,7 +13,7 @@ namespace chatServer
         /// Starts chat server.
         /// </summary>
         private static void startSyncServer(){
-            ServerMgr.getInstance().run();
+            Server.getInstance().run();
         }
     }
 }

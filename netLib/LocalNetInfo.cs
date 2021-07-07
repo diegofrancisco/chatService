@@ -37,10 +37,6 @@ namespace netLib
         {
             IPAddress ipAddress = null;
 
-            // TODO revisar
-            // IPHostEntry host = Dns.GetHostEntry("localhost"); // TODO put into a constant file
-            // if (host != null) ipAddress = host.AddressList[0];
-
             ipAddress = IPAddress.Parse("127.0.0.1");
 
             return ipAddress;

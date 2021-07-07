@@ -15,36 +15,14 @@ namespace chatServer
         {
             Task t = new Task(async () =>
             {
-                 await MessageBroker.getInstance().broadcastAsync(broadcastMessage);
+                 await UserPool.getInstance().broadcastAsync(broadcastMessage);
             });
             Task.WaitAll(t);
         }
 
         private void broadcastToAllClients(string broadcastMessage) 
         {
-            MessageBroker.getInstance().broadcast(broadcastMessage);
-        }
-
-        private void sendMessageToClient(NetworkStream stream, string sendMessage)
-        {
-            byte[] sendBuffer = new byte[1024]; // TODO put into a constant
-
-            sendBuffer = Encoding.ASCII.GetBytes(sendMessage);
-            stream.Write(sendBuffer, 0, sendBuffer.Length);
-
-        }
-
-        private string getClientResponse(NetworkStream stream)
-        {
-            byte[] receivedBuffer = new byte[1024];
-            string msg;
-
-            int byte_count = stream.Read(receivedBuffer, 0, receivedBuffer.Length);
-            byte[] formated = new byte[byte_count];
-            Array.Copy(receivedBuffer, formated, byte_count); 
-            msg = Encoding.ASCII.GetString(formated);
-
-            return msg;
+            UserPool.getInstance().broadcast(broadcastMessage);
         }
 
         public ChatInstance(string user, TcpClient tcpClient)
@@ -58,26 +36,28 @@ namespace chatServer
             NetworkStream stream = this.socket.GetStream();
             string nickname;
 
-            this.sendMessageToClient(stream, "1|Welcome to out chat server! Please provide a nickname: ");
+            MessageBroker.sendMessageToClient(stream, "Welcome to out chat server! Please provide a nickname: ", 0);
 
             while (true)
             {
-                nickname = this.getClientResponse(stream);
+                nickname = MessageBroker.getClientResponse(stream);
 
                 if (String.IsNullOrEmpty(nickname))
                 {
-                    this.sendMessageToClient(stream, "0|Please enter non empty nickname");
+                    MessageBroker.sendMessageToClient(stream, "Please enter non empty nickname", 0);
                 }
-                else if (MessageBroker.getInstance().addUser(nickname.Trim(), this.socket))
+                else if (UserPool.getInstance().addUser(nickname.Trim(), this.socket))
                 {
                     this.user = nickname.Trim();
-                    this.sendMessageToClient(stream, String.Format("1|You are registered as {0}. Joining #general", nickname)); // TODO put all strings in a resource
+                    MessageBroker.sendMessageToClient(stream, String.Format("You are registered as {0}. Joining #general", nickname), 1);
+                    MessageBroker.getClientResponse(stream); // Receive ACK before sending broadcast
                     this.broadcastToAllClients(String.Format("{0} has joined #general", nickname));
+                    Console.WriteLine(String.Format("User {0} registered and is now online.", nickname));
                     break;
                 }
                 else
                 {
-                    this.sendMessageToClient(stream, String.Format("0|Sorry, the nickname {0} is already taken. Please choose a different one: ", nickname));
+                    MessageBroker.sendMessageToClient(stream, String.Format("Sorry, the nickname {0} is already taken. Please choose a different one: ", nickname), 0);
                 }
             }
 
@@ -85,7 +65,7 @@ namespace chatServer
             {
                 if (stream.DataAvailable)
                 {
-                    string command = this.getClientResponse(stream);
+                    string command = MessageBroker.getClientResponse(stream);
                     this.broadcastToAllClients(String.Format("{0} says: {1}", nickname, command));
                 }
                 Thread.Sleep(500);

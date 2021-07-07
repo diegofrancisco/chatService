@@ -1,113 +1,39 @@
 using System;
-using System.Threading.Tasks;
 using System.Net.Sockets;
-using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace chatServer
 {
     public class MessageBroker
     {
-        /// <summary>
-        /// Singleton class instance.
-        /// </summary>
-        private static MessageBroker s_instance = null;
-
-        /// <summary>
-        /// Lock object to control concorrence
-        /// </summary>
-        private object m_lock = new Object();
-
-        /// <summary>
-        /// Mapping of all users.
-        /// </summary>
-        private Dictionary<string, TcpClient> m_usersMap = new Dictionary<string, TcpClient>();
-
-        /// <summary>
-        /// Constructor.
-        /// </summary>
-        MessageBroker()
-        { }
-
-        /// <summary>
-        /// Returns singleton instance.
-        /// </summary>
-        /// <returns> Singleton instance. </returns>
-        public static MessageBroker getInstance()
+        public static void sendMessageToClient(NetworkStream stream, string sendMessage, int command)
         {
-            if (s_instance == null)
-            {
-                s_instance = new MessageBroker();
-            }
-            return s_instance;
+            byte[] sendBuffer = new byte[1024]; // TODO put into a constant
+
+            sendBuffer = Encoding.ASCII.GetBytes(command.ToString() + "|" + sendMessage);
+            stream.Write(sendBuffer, 0, sendBuffer.Length);
         }
 
-        public List<TcpClient> getUsers()
+        public static async Task sendMessageToClientAsync(NetworkStream stream, string sendMessage, int command)
         {
-            List<TcpClient> clients = null;
+            byte[] sendBuffer = new byte[1024]; // TODO put into a constant
 
-            lock (m_lock)
-            {
-                clients = new List<TcpClient>(this.m_usersMap.Values);
-            }
-
-            return clients;
+            sendBuffer = Encoding.ASCII.GetBytes(command + '|' + sendMessage);
+            await stream.WriteAsync(sendBuffer,0, sendBuffer.Length);
         }
 
-        public bool addUser(string user, TcpClient tcpClient)
+        public static string getClientResponse(NetworkStream stream)
         {
-            bool success = false;
+            byte[] receivedBuffer = new byte[1024];
+            string msg;
 
-            lock (m_lock)
-            {
-                if (!this.m_usersMap.ContainsKey(user))
-                {
-                    this.m_usersMap.Add(user, tcpClient);
-                    success = true;
-                }
-            }
+            int byte_count = stream.Read(receivedBuffer, 0, receivedBuffer.Length);
+            byte[] formated = new byte[byte_count];
+            Array.Copy(receivedBuffer, formated, byte_count); 
+            msg = Encoding.ASCII.GetString(formated);
 
-            return success;
-        }
-
-        public bool removeUser(string user)
-        {
-            bool success = false;
-
-            lock (m_lock)
-            {
-                if (this.m_usersMap.ContainsKey(user))
-                {
-                    this.m_usersMap.Remove(user);
-                    success = true;
-                }
-            }
-
-            return success;
-        }
-
-        public async Task broadcastAsync(string message)
-        {
-            List<TcpClient> users = this.getUsers();
-
-            foreach (TcpClient socket in users)
-            {
-                NetworkStream stream = socket.GetStream();
-                byte[] buffer = Encoding.ASCII.GetBytes(message);
-                await stream.WriteAsync(buffer,0, buffer.Length);
-            }
-        }
-
-        public void broadcast(string message)
-        {
-            List<TcpClient> users = this.getUsers();
-
-            foreach (TcpClient socket in users)
-            {
-                NetworkStream stream = socket.GetStream();
-                byte[] buffer = Encoding.ASCII.GetBytes(message);
-                stream.Write(buffer,0, buffer.Length);
-            }
+            return msg;
         }
     }
 }

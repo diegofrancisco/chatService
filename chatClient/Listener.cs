@@ -15,18 +15,14 @@ namespace chatClient
 
         public void run()
         {
+            string message;
+
             while (true)
             {
                 if (this.mStream.DataAvailable)
                 {
-                    byte[] receivedBytes = new byte[1024];
-                    int byte_count = this.mStream.Read(receivedBytes, 0, receivedBytes.Length);
-                    byte[] formated = new byte[byte_count];
-                    //handle  the null characteres in the byte array
-                    Array.Copy(receivedBytes, formated, byte_count);
-                    string data = Encoding.ASCII.GetString(formated);
-
-                    Console.WriteLine(data + '\n');
+                    MessageBroker.getServerResponse(this.mStream, out message);
+                    ConsoleSync.writeToConsoleSync(message);
                 }else
                 {
                     Thread.Sleep(500);

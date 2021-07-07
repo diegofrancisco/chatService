@@ -7,28 +7,28 @@ using netLib;
 
 namespace chatServer
 {
-    public class ServerMgr
+    public class Server
     {
         /// <summary>
         /// Singleton class instance.
         /// </summary>
-        private static ServerMgr s_instance = null;
+        private static Server s_instance = null;
 
         /// <summary>
         /// Constructor.
         /// </summary>
-        ServerMgr()
+        Server()
         {   }
 
                 /// <summary>
         /// Returns singleton instance.
         /// </summary>
         /// <returns> Singleton instance. </returns>
-        public static ServerMgr getInstance()
+        public static Server getInstance()
         {
             if (s_instance == null)
             {
-                s_instance = new ServerMgr();
+                s_instance = new Server();
             }
             return s_instance;
         }
@@ -52,12 +52,13 @@ namespace chatServer
                 Console.WriteLine("Exception ex", ex.Message);
             }
 
+            Console.WriteLine("Server started. Waiting conections...");
+
             while (true)
             {
-                ///TODO pensar numa maneira de parar o servidor << usando asyn???
                 TcpClient tcpClient = tcpListener.AcceptTcpClient();
 
-                Console.WriteLine("New user connected!!");
+                Console.WriteLine("New user connected!");
 
                 ChatInstance chat = new ChatInstance(string.Empty, tcpClient);
                 Thread thread = new Thread(new ThreadStart(chat.run));
